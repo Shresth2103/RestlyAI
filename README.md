@@ -27,7 +27,7 @@ sudo dnf install gtk3-devel
 sudo pacman -S gtk3
 Quick Install
 Clone the repository:
-git clone https://github.com/krednie/restly.git
+git clone https://github.com/Shresth2103/RestlyAI.git
 cd restly
 Run the installer:
 chmod +x install.sh
@@ -72,71 +72,9 @@ restly --interval 25 --eyecare 1
 # Stop the daemon
 restly --stop
 
-# Check if running
-pgrep restly
-📁 File Structure
-restly/
-├── main.c          # Application entry point
-├── config.c/.h     # Command-line argument parsing
-├── daemon.c/.h     # Background daemon functionality
-├── timer.c/.h      # Timer and scheduling logic
-├── popup.c/.h      # GTK popup notifications
-├── install.sh      # Installation script
-└── README.md       # This file
-🛠️ Development
-Building Manually
-gcc -o restly main.c config.c daemon.c timer.c popup.c $(pkg-config --cflags --libs gtk+-3.0)
-Debugging
-To run in foreground mode for debugging, comment out the daemonize() call in main.c.
 
-🔧 Configuration Examples
-For Developers
-# Short 15-minute breaks during coding hours
-restly --interval 15 --active-hours 09:00-18:00 --eyecare 1
-For Office Workers
-# Standard breaks with custom message
-restly --interval 30 --message "Stand up and stretch!" --eyecare 0
-For Students
-# Frequent popups during study sessions
-restly --interval 25 --active-hours 08:00-22:00 --eyecare 1
-🚨 Troubleshooting
-Common Issues
-"GTK+3 development libraries not found"
 
-Install the development packages for your distribution (see Prerequisites)
-"Daemon not starting"
 
-Check if another instance is running: pgrep restly
-Stop existing daemon: restly --stop
-"Popups not appearing"
-
-Ensure your desktop environment supports notifications
-Check if notification permissions are enabled
-"PATH not found after installation"
-
-Restart your terminal or run: source ~/.bashrc
-Manually add to PATH: export PATH="$HOME/.local/bin:$PATH"
-Uninstallation
-# Stop the daemon
-restly --stop
-
-# Remove files
-rm ~/.local/bin/restly
-rm ~/.config/autostart/restly.desktop
-rm /tmp/restlychild.pid
-
-# Remove PATH entry from ~/.bashrc (manual)
-🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
-
-Development Setup
-Fork the repository
-Create your feature branch (git checkout -b feature/AmazingFeature)
-Commit your changes (git commit -m 'Add some AmazingFeature')
-Push to the branch (git push origin feature/AmazingFeature)
-Open a Pull Request
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 🙏 Acknowledgments
 Inspired by the 20-20-20 rule for eye health
