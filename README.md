@@ -2,7 +2,7 @@
 
 **WORK BETTER, FEEL BETTER**
 
-**AI driven personal time and health manager**
+**AI driven personal time and health manager.**
 **Restly gently helps you solve all your eyecare needs while using your favourite device(will soon expand to other platforms)**
 **Restly helps you reduce eye strain, stay focused, and keep your energy up. No more headaches, no more deteriorating eyesignt, no more thickening glasses.**
 
