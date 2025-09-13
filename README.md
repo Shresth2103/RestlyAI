@@ -11,7 +11,9 @@ Restly runs silently in the background and sends gentle popup notifications to r
 ## ✨ Features
 
 - 👁️ **Built-in eye care routine** - Guided eye exercises and neck stretches
-- 🎨 **Beautiful notifications** - Elegant, non-intrusive popup design
+- 🧠  **AI-driven** - AI-based reports, suggestions and insights for your day
+- 📱 **NLP processing** - understands natural english to become the perfect assistant
+- 🎨 **Beautiful notifications and dashboard** - Elegant, non-intrusive popups and dashboard design
 - 🚀 **Auto-start** - Automatically starts with your system
 - 🎯 **Custom messages** - Create your own popup messages
 - ⏰ **Active hours** - Only show popups during specified time periods
@@ -37,24 +39,57 @@ sudo pacman -S gtk3
 
 ### Quick Install
 
-1. Clone the repository:
+### Automated Installation
+
+ **Download and Setup:**
 ```bash
-git clone https://github.com/krednie/restly.git
+git clone https://github.com/Shresth2103/restlyAI.git
 cd restly
-```
-
-2. Run the installer:
-```bash
 chmod +x install.sh
-./install.sh
 ```
 
-The installer will:
-- Compile the application
-- Install it to `~/.local/bin/`
-- Add the directory to your PATH
-- Set up autostart configuration
-- Optionally start the daemon immediately
+**The installer automatically handles:**
+- Dependency resolution and installation
+- Secure compilation of all components
+- Professional file permissions setup
+- System integration and autostart configuration
+- AI service configuration (optional)
+- Dashboard server deployment
+
+### Manual Installation for IT Departments
+
+For organizations requiring custom deployment:
+
+```bash
+# Install system dependencies
+sudo apt install libgtk-3-dev python3-pip python3-gi python3-gi-cairo gir1.2-gtk-3.0
+
+# Install Python dependencies
+pip3 install httpx aiohttp
+
+# Compile and install
+make clean && make all
+sudo make install
+```
+
+### Post-Installation Configuration
+
+1. **AI Service Setup (Optional):**
+```bash
+restly-setup-gemini
+```
+
+2. **Verify Installation:**
+```bash
+restly --version
+restly-controller --version
+```
+
+3. **Start Services:**
+```bash
+restly --interval 25 --active-hours 09:00-17:00
+restly-controller &
+```
 
 ## 🚀 Usage
 
