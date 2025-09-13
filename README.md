@@ -1,12 +1,12 @@
 # Restly 
 
 **WORK BETTER, FEEL BETTER**
-**AI BASED EYE CARE AND PRODUCTIVITY APP**
 
-**Restly gently helps you solve all your health and time management needs while using your favourite device(will soon expand to other platforms)**
-**Restly helps you reduce eye strain,generate health and productivity reports, stay focused, and keep your energy up. No more headaches, no more deteriorating eyesignt, no more thickening glasses.**
 
-Restly runs silently in the background and sends gentle popup notifications based on the 20-20-20 rule and follow best ergonomic practices for your health. Moreover you can setup your own customized notifications, all from the app or cli!
+**Restly gently helps you solve all your eyecare needs while using your favourite device(will soon expand to other platforms)**
+**Restly helps you reduce eye strain, stay focused, and keep your energy up. No more headaches, no more deteriorating eyesignt, no more thickening glasses.**
+
+Restly runs silently in the background and sends gentle popup notifications to remind you to take breaks, blink, and perform eye exercises based on the 20-20-20 rule and follow best ergonomic practices for your health. Moreover you can setup your own customized notifications! 
 
 ## ✨ Features
 
@@ -91,6 +91,33 @@ When `--eyecare 1` is enabled, Restly guides you through a quick and easy yet cr
 
 This routine is based on the **20-20-20 rule**: Every 20 minutes, look at something 20 feet away for 20 seconds.
 
+### Managing the Daemon
+
+```bash
+# Start the daemon
+restly --interval 25 --eyecare 1
+
+# Stop the daemon
+restly --stop
+
+# Check if running
+pgrep restly
+```
+
+## 📁 File Structure
+
+```
+restly/
+├── main.c          # Application entry point
+├── config.c/.h     # Command-line argument parsing
+├── daemon.c/.h     # Background daemon functionality
+├── timer.c/.h      # Timer and scheduling logic
+├── popup.c/.h      # GTK popup notifications
+├── install.sh      # Installation script
+└── README.md       # This file
+```
+
+## 🛠️ Development
 
 ### Building Manually
 
@@ -98,6 +125,95 @@ This routine is based on the **20-20-20 rule**: Every 20 minutes, look at someth
 gcc -o restly main.c config.c daemon.c timer.c popup.c $(pkg-config --cflags --libs gtk+-3.0)
 ```
 
+### Debugging
 
+To run in foreground mode for debugging, comment out the `daemonize()` call in `main.c`.
 
+## 🔧 Configuration Examples
+
+### For Developers
+```bash
+# Short 15-minute breaks during coding hours
+restly --interval 15 --active-hours 09:00-18:00 --eyecare 1
+```
+
+### For Office Workers
+```bash
+# Standard breaks with custom message
+restly --interval 30 --message "Stand up and stretch!" --eyecare 0
+```
+
+### For Students
+```bash
+# Frequent popups during study sessions
+restly --interval 25 --active-hours 08:00-22:00 --eyecare 1
+```
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**"GTK+3 development libraries not found"**
+- Install the development packages for your distribution (see Prerequisites)
+
+**"Daemon not starting"**
+- Check if another instance is running: `pgrep restly`
+- Stop existing daemon: `restly --stop`
+
+**"Popups not appearing"**
+- Ensure your desktop environment supports notifications
+- Check if notification permissions are enabled
+
+**"PATH not found after installation"**
+- Restart your terminal or run: `source ~/.bashrc`
+- Manually add to PATH: `export PATH="$HOME/.local/bin:$PATH"`
+
+### Uninstallation
+
+```bash
+# Stop the daemon
+restly --stop
+
+# Remove files
+rm ~/.local/bin/restly
+rm ~/.config/autostart/restly.desktop
+rm /tmp/restlychild.pid
+
+# Remove PATH entry from ~/.bashrc (manual)
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+### Development Setup
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Inspired by the 20-20-20 rule for eye health
+- Built with GTK3 for native Linux integration
+- Thanks to all future contributors and users providing feedback in advance. You guys are awesome.
+
+## 💡 Tips for Healthy Computer Usage
+
+- **Follow the 20-20-20 rule**: Every 20 minutes, look 20 feet away for 20 seconds
+- **Blink frequently**: Computer work reduces blink rate by up to 60%
+- **Adjust screen brightness**: Match your display to surrounding lighting
+- **Position your screen**: 20-24 inches away, top at or below eye level
+- **Take regular breaks**: Stand, stretch, and move around
+- **Stay hydrated**: Keep water nearby and drink regularly
+
+---
+
+**Made with ❤️ for healthier computing**
 ***KREDNIE***

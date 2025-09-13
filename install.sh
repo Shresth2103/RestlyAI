@@ -22,21 +22,37 @@ say "Installing $app_name …"
 
 command -v gcc >/dev/null 2>&1 || fail "gcc not found (install your C compiler)"
 command -v pkg-config >/dev/null 2>&1 || fail "pkg-config not found"
+command -v python3 >/dev/null 2>&1 || fail "python3 not found"
 if ! pkg-config --exists gtk+-3.0; then
   fail "GTK+3 development libraries not found. Install with:\n  - Debian/Ubuntu: sudo apt install libgtk-3-dev\n  - Fedora:        sudo dnf install gtk3-devel\n  - Arch:          sudo pacman -S gtk3"
 fi
+
+# Check Python dependencies
+say "Checking Python dependencies..."
+python3 -c "import gi; gi.require_version('Gtk', '3.0')" 2>/dev/null || fail "PyGObject not found. Install with:\n  - Debian/Ubuntu: sudo apt install python3-gi python3-gi-cairo gir1.2-gtk-3.0\n  - Fedora:        sudo dnf install python3-gobject gtk3\n  - Arch:          sudo pacman -S python-gobject gtk3"
+python3 -c "import httpx" 2>/dev/null || fail "httpx not found. Install with:\n  - Debian/Ubuntu: sudo apt install python3-httpx\n  - Fedora:        sudo dnf install python3-httpx\n  - Arch:          sudo pacman -S python-httpx"
+python3 -c "import aiohttp" 2>/dev/null || fail "aiohttp not found. Install with:\n  - Debian/Ubuntu: sudo apt install python3-aiohttp\n  - Fedora:        sudo dnf install python3-aiohttp\n  - Arch:          sudo pacman -S python-aiohttp"
+
 ok "Build prerequisites present"
 
 say "Compiling $bin_name …"
 mkdir -p "$install_bin_dir"
 
-gcc -O2 -Wall -Wextra \
-  -o "$bin_name" \
-  main.c config.c daemon.c timer.c popup.c \
-  $(pkg-config --cflags --libs gtk+-3.0)
+# Use Makefile for proper build with all dependencies
+make clean
+make all
 
 install -m 0755 "$bin_name" "$install_bin_path"
 ok "Installed binary to ${install_bin_path/$HOME/~}"
+
+# Install Python scripts
+say "Installing Python scripts..."
+install -m 0755 restly_controller.py "$install_bin_dir/"
+install -m 0755 daily_summary.py "$install_bin_dir/"
+install -m 0755 ai_summary.py "$install_bin_dir/"
+install -m 0755 setup_gemini.py "$install_bin_dir/"
+install -m 0755 dashboard_server.py "$install_bin_dir/"
+ok "Installed Python scripts to ${install_bin_dir/$HOME/~}"
 
 cat > "$wrapper_path" <<'EOF'
 #!/usr/bin/env bash
@@ -114,12 +130,20 @@ fi
 printf "\nInstallation complete!\n"
 printf '%s\n' "- Binary:   ${install_bin_path/$HOME/~}"
 printf '%s\n' "- Launcher: ${wrapper_path/$HOME/~}"
+printf '%s\n' "- Controller: ${install_bin_dir/$HOME/~}/restly_controller.py"
+printf '%s\n' "- Dashboard: ${install_bin_dir/$HOME/~}/dashboard_server.py"
 if [[ "$use_systemd" -eq 1 ]]; then
   printf '%s\n' "- systemd:  ${unit_path/$HOME/~}"
 fi
 printf '%s\n' "- Autostart: ${desktop_path/$HOME/~}"
 printf "\nrestly is not running right now!\n"
-printf "\nto write your own easy command. read more on the README.md on https://github.com/krednie/restly example: restly -i 20 -e 1\n"
-printf "\nor simply type restly to run it with default settings. (interval = 20min, eyecare = on, active hours = always while using pc\n"
-printf "\nyoure all set!\n"
+printf "\nNew Features:\n"
+printf "  - Activity tracking and AI-powered summaries\n"
+printf "  - Beautiful web dashboard with Apple Watch-style rings\n"
+printf "  - Python controller GUI for easy management\n"
+printf "  - Google Gemini AI integration\n"
+printf "\nTo get started:\n"
+printf "  1. Run: restly_controller.py (GUI interface)\n"
+printf "  2. Or: restly (command line daemon)\n"
+printf "  3. Setup AI: setup_gemini.py (optional)\n"
 printf "\nMade with ❤ | KREDNIE\n"

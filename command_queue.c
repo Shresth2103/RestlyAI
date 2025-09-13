@@ -49,11 +49,10 @@ CommandAction parse_command_line(const char* line) {
     }
     
     // Simple JSON parsing for our specific format
-    // Look for "action":"set_session"
-    if (strstr(line, "\"action\":\"set_session\"")) {
+    if (strstr(line, "set_session")) {
         action.type = CMD_SET_SESSION;
         
-        // Extract duration_minutes
+        // Extract duration_minutes from params object
         char* duration_str = strstr(line, "\"duration_minutes\":");
         if (duration_str) {
             duration_str += strlen("\"duration_minutes\":");
@@ -62,20 +61,20 @@ CommandAction parse_command_line(const char* line) {
             action.params.session.duration_minutes = 45; // default
         }
         
-        // Extract type
+        // Extract type from params object
         if (strstr(line, "\"type\":\"deep_work\"")) {
             strncpy(action.params.session.type, "deep_work", sizeof(action.params.session.type) - 1);
         } else {
             strncpy(action.params.session.type, "work", sizeof(action.params.session.type) - 1);
         }
     }
-    else if (strstr(line, "\"action\":\"toggle_pause\"")) {
+    else if (strstr(line, "toggle_pause")) {
         action.type = CMD_TOGGLE_PAUSE;
     }
-    else if (strstr(line, "\"action\":\"summarize_day\"")) {
+    else if (strstr(line, "summarize_day")) {
         action.type = CMD_SUMMARIZE_DAY;
     }
-    else if (strstr(line, "\"action\":\"reschedule_break\"")) {
+    else if (strstr(line, "reschedule_break")) {
         action.type = CMD_RESCHEDULE_BREAK;
         
         // Extract delay_minutes if present
@@ -87,18 +86,40 @@ CommandAction parse_command_line(const char* line) {
             action.params.reschedule.delay_minutes = 15; // default
         }
     }
-    else if (strstr(line, "\"action\":\"nl_command\"")) {
+    else if (strstr(line, "nl_command")) {
         action.type = CMD_NL_COMMAND;
         
         // Extract the text field - simple extraction between quotes
-        char* text_start = strstr(line, "\"text\":\"");
+        // Handle both "text":"value" and "text": "value" (with space)
+        char* text_start = strstr(line, "\"text\":");
         if (text_start) {
-            text_start += strlen("\"text\":\"");
+            text_start += strlen("\"text\":");
+            // Skip any whitespace after the colon
+            while (*text_start == ' ' || *text_start == '\t') {
+                text_start++;
+            }
+            // Skip the opening quote
+            if (*text_start == '"') {
+                text_start++;
+            } else {
+                text_start = NULL; // Invalid format
+            }
+        }
+        if (text_start) {
             char* text_end = strchr(text_start, '"');
             if (text_end && (text_end - text_start) < sizeof(action.params.nl_command.text) - 1) {
-                strncpy(action.params.nl_command.text, text_start, text_end - text_start);
-                action.params.nl_command.text[text_end - text_start] = '\0';
+                size_t text_len = text_end - text_start;
+                strncpy(action.params.nl_command.text, text_start, text_len);
+                action.params.nl_command.text[text_len] = '\0';
+                // Initialize the rest of the buffer to be safe
+                memset(action.params.nl_command.text + text_len + 1, 0, sizeof(action.params.nl_command.text) - text_len - 1);
+            } else {
+                // Failed to extract - clear the text buffer
+                memset(action.params.nl_command.text, 0, sizeof(action.params.nl_command.text));
             }
+        } else {
+            // No text field found - clear the text buffer
+            memset(action.params.nl_command.text, 0, sizeof(action.params.nl_command.text));
         }
     }
     
@@ -127,9 +148,12 @@ int process_command_queue() {
         
         if (strlen(line) == 0) continue;
         
+        printf("DEBUG: Processing line: %s\n", line);
         CommandAction action = parse_command_line(line);
+        printf("DEBUG: Parsed command type: %d\n", action.type);
         if (action.type != CMD_UNKNOWN) {
             // Process the command
+            printf("DEBUG: Executing command\n");
             execute_command(&action);
             commands_processed++;
         }

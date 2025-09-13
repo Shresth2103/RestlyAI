@@ -2,11 +2,13 @@
 import json
 import os
 import sys
+import subprocess
+import tempfile
 from datetime import datetime, timezone
 
 import gi
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk, GLib
+from gi.repository import Gtk, GLib, Pango
 
 
 try:
@@ -40,6 +42,55 @@ def append_command(action, params=None):
         payload["params"] = params
     with open(QUEUE_FILE, "a", encoding="utf-8") as f:
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
+
+
+class SummaryDialog(Gtk.Dialog):
+    def __init__(self, parent, summary_text):
+        super().__init__(title="Restly Daily Summary", transient_for=parent, flags=0)
+        self.set_modal(True)
+        self.set_default_size(800, 700)
+
+        content = self.get_content_area()
+        
+        # Create scrolled window for the summary
+        scrolled = Gtk.ScrolledWindow()
+        scrolled.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        
+        # Create text view for markdown content
+        text_view = Gtk.TextView()
+        text_view.set_editable(False)
+        text_view.set_wrap_mode(Gtk.WrapMode.WORD)
+        
+        # Set monospace font for better readability
+        font_desc = Pango.FontDescription("monospace 10")
+        text_view.override_font(font_desc)
+        
+        # Add minimal padding for maximum text space
+        text_view.set_margin_start(10)
+        text_view.set_margin_end(10)
+        text_view.set_margin_top(10)
+        text_view.set_margin_bottom(5)
+        
+        # Insert the summary text
+        buffer = text_view.get_buffer()
+        buffer.set_text(summary_text)
+        
+        scrolled.add(text_view)
+        content.add(scrolled)
+        
+        # Add very small buttons to minimize button area
+        close_btn = self.add_button("Close", Gtk.ResponseType.CLOSE)
+        save_btn = self.add_button("Save", Gtk.ResponseType.APPLY)
+        
+        # Make buttons very small to maximize text area
+        close_btn.set_size_request(60, 25)
+        save_btn.set_size_request(60, 25)
+        
+        self.show_all()
+    
+    def get_text(self):
+        buffer = self.get_content_area().get_children()[0].get_child().get_buffer()
+        return buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
 
 
 class CommandDialog(Gtk.Dialog):
@@ -165,7 +216,101 @@ class ControllerApp:
         append_command("toggle_pause")
 
     def on_summarize_day(self, *_args):
-        append_command("summarize_day")
+        """Open the beautiful web dashboard."""
+        try:
+            # Find the dashboard server script
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            dashboard_script = os.path.join(script_dir, "dashboard_server.py")
+            
+            if not os.path.exists(dashboard_script):
+                error_dlg = Gtk.MessageDialog(
+                    transient_for=self.window if self.window else None,
+                    flags=0,
+                    message_type=Gtk.MessageType.ERROR,
+                    buttons=Gtk.ButtonsType.OK,
+                    text=f"Dashboard server script not found at: {dashboard_script}"
+                )
+                error_dlg.run()
+                error_dlg.destroy()
+                return
+            
+            # Start the dashboard server in background
+            subprocess.Popen([
+                sys.executable, dashboard_script, "--host", "localhost", "--port", "8080"
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            
+            # Wait a moment for server to start
+            import time
+            time.sleep(2)
+            
+            # Open browser to dashboard
+            import webbrowser
+            webbrowser.open("http://localhost:8080")
+            
+            # Show success message
+            success_dlg = Gtk.MessageDialog(
+                transient_for=self.window if self.window else None,
+                flags=0,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.OK,
+                text="Dashboard opened in your browser!\n\n"
+                     "View your productivity metrics\n"
+                     "Apple Watch-style activity rings\n"
+                     "AI-powered insights and summaries\n"
+                     "Beautiful charts and analytics\n\n"
+                     "The dashboard auto-refreshes every 30 seconds!"
+            )
+            success_dlg.run()
+            success_dlg.destroy()
+            
+        except Exception as e:
+            error_dlg = Gtk.MessageDialog(
+                transient_for=self.window if self.window else None,
+                flags=0,
+                message_type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.OK,
+                text=f"Error opening dashboard: {str(e)}"
+            )
+            error_dlg.run()
+            error_dlg.destroy()
+    
+    def _save_summary_to_file(self, summary_text, date):
+        """Save summary to a file."""
+        try:
+            # Create filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"restly_summary_{date}_{timestamp}.md"
+            
+            # Get user's Documents directory
+            documents_dir = os.path.expanduser("~/Documents")
+            if not os.path.exists(documents_dir):
+                documents_dir = os.path.expanduser("~")
+            
+            filepath = os.path.join(documents_dir, filename)
+            
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(summary_text)
+            
+            success_dlg = Gtk.MessageDialog(
+                transient_for=self.window if self.window else None,
+                flags=0,
+                message_type=Gtk.MessageType.INFO,
+                buttons=Gtk.ButtonsType.OK,
+                text=f"Summary saved to:\n{filepath}"
+            )
+            success_dlg.run()
+            success_dlg.destroy()
+            
+        except Exception as e:
+            error_dlg = Gtk.MessageDialog(
+                transient_for=self.window if self.window else None,
+                flags=0,
+                message_type=Gtk.MessageType.ERROR,
+                buttons=Gtk.ButtonsType.OK,
+                text=f"Error saving file: {str(e)}"
+            )
+            error_dlg.run()
+            error_dlg.destroy()
 
     def on_command_palette(self, *_args):
         parent = self.window if self.window else None
@@ -173,8 +318,23 @@ class ControllerApp:
         res = dlg.run()
         if res == Gtk.ResponseType.OK:
             text = dlg.get_text()
+            print(f"DEBUG: Dialog result: {res}, text: '{text}', len: {len(text)}")
             if text:
+                print(f"DEBUG: Sending command: {text}")
                 append_command("nl_command", {"text": text})
+                # Debug: show what was actually written
+                import time
+                time.sleep(0.1)  # Give it a moment to write
+                try:
+                    with open(QUEUE_FILE, "r") as f:
+                        content = f.read()
+                        print(f"DEBUG: Queue file content: {content}")
+                except Exception as e:
+                    print(f"DEBUG: Error reading queue file: {e}")
+            else:
+                print("DEBUG: Empty text, not sending command")
+        else:
+            print(f"DEBUG: Dialog cancelled, result: {res}")
         dlg.destroy()
 
     def on_quit(self, *_args):
